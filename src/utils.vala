@@ -480,47 +480,52 @@ public class Weekdays {
 }
 
 public class Bell : Object {
-    private Gtk.MediaFile media_file;
-    private GLib.File file;
+    private GLib.Cancellable cancellable;
+    private Lfb.Event event;
+    private string soundtheme;
+    private string eventname;
 
-    public Bell (GLib.File sound) {
-        if (sound == null) {
-            warning ("Sound is missing");
-            return;
-        }
-
-        file = sound;
+    public Bell (string eventid) {
+        var settings = new GLib.Settings("org.gnome.desktop.sound");
+        soundtheme = settings.get_string ("theme-name");
+        eventname = eventid;
+        cancellable = new GLib.Cancellable();
     }
 
-    private void ring_real (bool repeat) {
-        media_file = Gtk.MediaFile.for_file (file);
+    private async void ring_real (bool repeat) {
+        if (!Lfb.is_initted())
+            return;
 
-        media_file.set_loop (repeat);
-        media_file.notify["prepared"].connect (() => {
-            if (!media_file.has_audio) {
-                warning ("Invalid sound");
-            }
-        });
-
-        media_file.play_now ();
+        event = new Lfb.Event (eventname);
+        if (repeat)
+            event.timeout = 0;
+        try {
+            yield event.trigger_feedback_async (cancellable);
+        } catch (GLib.IOError.CANCELLED e) {
+            // ignore
+        } catch (GLib.Error e) {
+            warning ("Error triggering feedback for event %s: %s", eventname, e.message);
+        }
     }
 
     public void ring_once () {
-        ring_real (false);
+        ring_real.begin (false);
     }
 
     public void ring () {
-        ring_real (true);
+        ring_real.begin (true);
     }
 
     public void stop () {
-        if (media_file == null) {
-            return;
-        }
-
-        media_file.set_playing (false);
-        media_file.close ();
-        media_file = null;
+        event.end_feedback_async.begin (cancellable, (obj, res) => {
+            try {
+                event.end_feedback_async.end(res);
+            } catch (GLib.IOError.CANCELLED e) {
+                // ignore
+            } catch (GLib.Error e) {
+                warning ("Error ending feedback for event %s: %s", eventname, e.message);
+            }
+        });
     }
 }
 
