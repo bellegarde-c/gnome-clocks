@@ -21,6 +21,7 @@ namespace Clocks {
 public class Application : Adw.Application {
     const OptionEntry[] OPTION_ENTRIES = {
         { "version", 'v', 0, OptionArg.NONE, null, N_("Print version information and exit"), null },
+        { "hidden", 0, 0, OptionArg.NONE, null, N_("Start without showing a window"), null },
         { (string) null }
     };
 
@@ -36,6 +37,7 @@ public class Application : Adw.Application {
     private World.ShellWorldClocks world_clocks;
     private uint world_clocks_id = 0;
     private Window? window;
+    private bool start_hidden = false;
     private List<string> system_notifications;
 
     private Window ensure_window () ensures (window != null) {
@@ -97,7 +99,11 @@ public class Application : Adw.Application {
         base.activate ();
 
         var win = ensure_window ();
-        win.present ();
+        if (!start_hidden) {
+            win.present ();
+        } else {
+            start_hidden = false;
+        }
     }
 
     protected override void startup () {
@@ -118,6 +124,9 @@ public class Application : Adw.Application {
             print ("%s %s\n", (string) Environment.get_application_name (), Config.VERSION);
             return 0;
         }
+        if (options.contains("hidden")) {
+            start_hidden = true;
+        }
 
         return -1;
     }
@@ -130,6 +139,7 @@ public class Application : Adw.Application {
         var win = ensure_window ();
         win.show_world ();
         win.present ();
+
 
         var world = GWeather.Location.get_world ();
         if (world != null) {
