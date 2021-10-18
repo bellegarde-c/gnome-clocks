@@ -1,8 +1,10 @@
-gnome-clocks (41.0-1) UNRELEASED; urgency=medium
+gnome-clocks (41.0-1) unstable; urgency=medium
 
   * New upstream release
+  * debian/control.in: Bump minimum glib to 2.68
+  * debian/copyright: Update
 
- -- Jeremy Bicha <jbicha@debian.org>  Sun, 17 Oct 2021 20:16:48 -0400
+ -- Jeremy Bicha <jbicha@debian.org>  Sun, 17 Oct 2021 20:27:55 -0400
 
 gnome-clocks (40.0-2) unstable; urgency=medium
 
