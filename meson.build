@@ -1,7 +1,7 @@
 project(
   'gnome-clocks',
   ['vala', 'c'],
-  version: '40.0',
+  version: '41.0',
   license: 'GPL2+',
   meson_version: '>= 0.50.0',
 )
@@ -10,7 +10,7 @@ gnome = import('gnome')
 i18n = import('i18n')
 python3 = import('python3')
 
-glib = dependency('glib-2.0', version: '>= 2.58')
+glib = dependency('glib-2.0', version: '>= 2.68')
 gio = dependency('gio-2.0', version: '>= 2.58')
 gobject = dependency('gobject-2.0', version: '>= 2.58')
 gtk = dependency('gtk+-3.0', version: '>=3.20')
