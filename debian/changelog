@@ -1,3 +1,10 @@
+gnome-clocks (41.0-2) unstable; urgency=medium
+
+  * Add patch to support GNOME 42 dark theme preference
+  * debian/control.in: Bump minimum libhandy to 1.5.90 for that change
+
+ -- Jeremy Bicha <jeremy.bicha@canonical.com>  Tue, 15 Feb 2022 09:50:07 -0500
+
 gnome-clocks (41.0-1) unstable; urgency=medium
 
   * New upstream release
