@@ -1,0 +1,37 @@
+From: Maximiliano Sandoval R <msandova@gnome.org>
+Date: Tue, 15 Feb 2022 12:13:43 +0100
+Subject: location-dialog: Do not match timezones on search
+
+Looking for capitals will cause a large amount of unwanted results due
+to many matches of the timezone name.
+
+Fixes: https://gitlab.gnome.org/GNOME/gnome-clocks/-/issues/222
+
+https://gitlab.gnome.org/GNOME/gnome-clocks/-/merge_requests/199
+---
+ src/world-location-dialog.vala | 12 +-----------
+ 1 file changed, 1 insertion(+), 11 deletions(-)
+
+diff --git a/src/world-location-dialog.vala b/src/world-location-dialog.vala
+index 35e6458..dabc8e2 100644
+--- a/src/world-location-dialog.vala
++++ b/src/world-location-dialog.vala
+@@ -157,17 +157,7 @@ private class LocationDialog : Gtk.Window {
+                 }
+                 var contains_country_name = country_name != null && ((string) country_name).contains (search);
+ 
+-                string? timezone_name = null;
+-                var timezone = location.get_timezone ();
+-                if (timezone != null) {
+-                    timezone_name = timezone.get_identifier ();
+-                    if (timezone_name != null) {
+-                        timezone_name = ((string) timezone_name).normalize ().casefold ();
+-                    }
+-                }
+-                var contains_timezone_name = timezone_name != null && ((string) timezone_name).contains (search);
+-
+-                if (contains_name || contains_country_name || contains_timezone_name) {
++                if (contains_name || contains_country_name) {
+                     bool selected = world.location_exists (location);
+                     locations.append (new ClockLocation (location, selected));
+                 }
