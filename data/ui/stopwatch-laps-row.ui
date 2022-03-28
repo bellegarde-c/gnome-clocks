@@ -1,59 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
 <interface>
-  <requires lib="gtk+" version="3.14"/>
   <template class="ClocksStopwatchLapsRow" parent="GtkListBoxRow">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="activatable">False</property>
     <child>
       <object class="GtkBox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="border_width">18</property>
+        <property name="spacing">18</property>
+        <property name="margin-top">18</property>
+        <property name="margin-bottom">18</property>
+        <property name="margin-start">18</property>
+        <property name="margin-end">18</property>
         <child>
           <object class="GtkLabel" id="duration_label">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Time</property>
             <property name="halign">start</property>
             <property name="valign">center</property>
-            <attributes>
-              <attribute name="font-features" value="tnum=1"/>
-            </attributes>
             <style>
               <class name="lap-time"/>
+              <class name="numeric"/>
             </style>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">6</property>
-            <property name="position">0</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="difference_label">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Difference</property>
             <property name="halign">start</property>
+            <property name="hexpand">True</property>
             <property name="valign">center</property>
-            <attributes>
-              <attribute name="font-features" value="tnum=1"/>
-            </attributes>
+            <style>
+              <class name="numeric"/>
+            </style>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">6</property>
-            <property name="position">1</property>
-          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="index_label">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="halign">end</property>
             <property name="valign">center</property>
             <property name="width_chars">3</property>
@@ -61,11 +40,6 @@
               <class name="dim-label"/>
             </style>
           </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
         </child>
       </object>
     </child>

@@ -102,26 +102,27 @@ public class Info : Object {
             }
         }
 
-        var locations = location.get_children ();
-        for (int i = 0; i < locations.length; i++) {
-            if (locations[i].get_level () == GWeather.LocationLevel.CITY) {
-                if (locations[i].has_coords ()) {
+        var loc = location.next_child (null);
+        while (loc != null) {
+            if (loc.get_level () == GWeather.LocationLevel.CITY) {
+                if (loc.has_coords ()) {
                     double latitude, longitude, distance;
 
-                    locations[i].get_coords (out latitude, out longitude);
+                    loc.get_coords (out latitude, out longitude);
                     distance = get_distance (((GClue.Location) geo_location).latitude,
                                              ((GClue.Location) geo_location).longitude,
                                              latitude,
                                              longitude);
 
                     if (distance < minimal_distance) {
-                        found_location = locations[i];
+                        found_location = loc;
                         minimal_distance = distance;
                     }
                 }
             }
 
-            yield search_locations (locations[i]);
+            yield search_locations (loc);
+            loc = location.next_child (loc);
         }
     }
 
@@ -134,8 +135,8 @@ public class Info : Object {
                 var found_timezone = ((GWeather.Location) found_location).get_timezone ();
 
                 if (timezone != null && found_timezone != null) {
-                    var tzid = ((GWeather.Timezone) timezone).get_tzid ();
-                    var found_tzid = ((GWeather.Timezone) found_timezone).get_tzid ();
+                    var tzid = timezone.get_identifier ();
+                    var found_tzid = found_timezone.get_identifier ();
                     if (tzid == found_tzid) {
                         return true;
                     }

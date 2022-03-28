@@ -1,104 +1,102 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <!-- interface-requires gtk+ 3.20 -->
-  <requires lib="gtk+" version="3.20"/>
-  <requires lib="libhandy" version="0.0"/>
-  <template class="ClocksWindow" parent="HdyApplicationWindow">
-    <property name="title" bind-source="header_bar" bind-property="title" bind-flags="sync-create" />
+  <template class="ClocksWindow" parent="AdwApplicationWindow">
+    <property name="hide-on-close">True</property>
     <child>
-      <object class="HdyDeck" id="alarm_deck">
-        <property name="visible">True</property>
+      <object class="GtkEventControllerKey">
+        <signal name="key-pressed" handler="key_press_cb"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkEventControllerFocus">
+        <signal name="enter" handler="enter_cb"/>
+      </object>
+    </child>
+    <child>
+      <object class="AdwLeaflet" id="alarm_leaflet">
         <property name="orientation">vertical</property>
-        <property name="visible-child">world_deck</property>
+        <property name="visible-child">world_leaflet</property>
         <property name="transition-type">under</property>
+        <property name="can-unfold">False</property>
         <signal name="notify::visible-child" handler="visible_child_changed"/>
         <child>
           <object class="ClocksAlarmRingingPanel" id="alarm_ringing_panel">
-            <property name="visible">True</property>
             <signal name="dismiss" handler="alarm_dismissed"/>
           </object>
         </child>
         <child>
-          <object class="HdyDeck" id="world_deck">
-            <property name="visible">True</property>
-            <property name="can-swipe-back">True</property>
+          <object class="AdwLeaflet" id="world_leaflet">
+            <property name="can-unfold">False</property>
+            <property name="can-navigate-back">True</property>
             <signal name="notify::visible-child" handler="visible_child_changed"/>
             <child>
               <object class="GtkBox" id="main_view">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="ClocksHeaderBar" id="header_bar">
-                    <property name="visible">True</property>
                     <property name="stack">stack</property>
                     <property name="switcher_bar">switcher_bar</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkStack" id="stack">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                  <object class="AdwViewStack" id="stack">
                     <property name="hexpand">True</property>
                     <property name="vexpand">True</property>
-                    <property name="homogeneous">True</property>
-                    <property name="transition-type">crossfade</property>
                     <signal name="notify::visible-child" handler="pane_changed" swapped="no"/>
                     <child>
-                      <object class="ClocksWorldFace" id="world">
-                        <property name="visible">True</property>
-                      </object>
-                      <packing>
+                      <object class="AdwViewStackPage">
                         <property name="name">world</property>
                         <property name="title" translatable="yes">World</property>
                         <property name="icon-name">globe-symbolic</property>
-                      </packing>
+                        <property name="child">
+                          <object class="ClocksWorldFace" id="world"/>
+                        </property>
+                      </object>
                     </child>
                     <child>
-                      <object class="ClocksAlarmFace" id="alarm">
-                        <property name="visible">True</property>
-                      </object>
-                      <packing>
+                      <object class="AdwViewStackPage">
                         <property name="name">alarm</property>
                         <property name="title" translatable="yes">Alarms</property>
                         <property name="icon-name">alarm-symbolic</property>
-                      </packing>
+                        <property name="child">
+                          <object class="ClocksAlarmFace" id="alarm"/>
+                        </property>
+                      </object>
                     </child>
                     <child>
-                      <object class="ClocksStopwatchFace" id="stopwatch">
-                        <property name="visible">True</property>
-                      </object>
-                      <packing>
+                      <object class="AdwViewStackPage">
                         <property name="name">stopwatch</property>
                         <property name="title" translatable="yes">Stopwatch</property>
                         <property name="icon-name">stopwatch-symbolic</property>
-                      </packing>
+                        <property name="child">
+                          <object class="ClocksStopwatchFace" id="stopwatch"/>
+                        </property>
+                      </object>
                     </child>
                     <child>
-                      <object class="ClocksTimerFace" id="timer">
-                        <property name="visible">True</property>
-                      </object>
-                      <packing>
+                      <object class="AdwViewStackPage">
                         <property name="name">timer</property>
                         <property name="title" translatable="yes">Timer</property>
                         <property name="icon-name">timer-symbolic</property>
-                      </packing>
+                        <property name="child">
+                          <object class="ClocksTimerFace" id="timer"/>
+                        </property>
+                      </object>
                     </child>
                   </object>
                 </child>
                 <child>
-                  <object class="HdyViewSwitcherBar" id="switcher_bar">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                  <object class="AdwViewSwitcherBar" id="switcher_bar">
                     <property name="stack">stack</property>
+                    <binding name="reveal">
+                      <lookup name="title-visible">header_bar</lookup>
+                    </binding>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <object class="ClocksWorldStandalone" id="world_standalone">
-                <property name="visible">True</property>
-              </object>
+              <object class="ClocksWorldStandalone" id="world_standalone"/>
             </child>
           </object>
         </child>

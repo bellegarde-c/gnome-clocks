@@ -20,7 +20,7 @@ namespace Clocks {
 namespace World {
 
 [GtkTemplate (ui = "/org/gnome/clocks/ui/world-face.ui")]
-public class Face : Gtk.Stack, Clocks.Clock {
+public class Face : Adw.Bin, Clocks.Clock {
     public signal void show_standalone (Item location);
 
     public PanelId panel_id { get; construct set; }
@@ -36,17 +36,20 @@ public class Face : Gtk.Stack, Clocks.Clock {
     private unowned Gtk.ScrolledWindow list_view;
     [GtkChild]
     private unowned Gtk.ListBox listbox;
+    [GtkChild]
+    private unowned Gtk.Stack stack;
 
     construct {
         panel_id = WORLD;
-        transition_type = CROSSFADE;
 
         locations = new ContentStore ();
         settings = new GLib.Settings ("org.gnome.clocks");
 
         locations.set_sorting ((item1, item2) => {
-            var offset1 = ((GWeather.Timezone) ((Item) item1).location.get_timezone ()).get_offset ();
-            var offset2 = ((GWeather.Timezone) ((Item) item2).location.get_timezone ()).get_offset ();
+            var interval1 = ((Item) item1).location.get_timezone ().find_interval (GLib.TimeType.UNIVERSAL, Gdk.CURRENT_TIME);
+            var offset1 = ((Item) item1).location.get_timezone ().get_offset (interval1);
+            var interval2 = ((Item) item2).location.get_timezone ().find_interval (GLib.TimeType.UNIVERSAL, Gdk.CURRENT_TIME);
+            var offset2 = ((Item) item2).location.get_timezone ().get_offset (interval2);
             if (offset1 < offset2)
                 return -1;
             if (offset1 > offset2)
@@ -146,22 +149,20 @@ public class Face : Gtk.Stack, Clocks.Clock {
     }
 
     public void activate_new () {
-        var dialog = new LocationDialog ((Gtk.Window) get_toplevel (), this);
+        var dialog = new LocationDialog ((Gtk.Window) get_root (), this);
 
-        dialog.response.connect ((_, response) => {
-            if (response == 1) {
+        dialog.location_added.connect (() => {
                 var location = dialog.get_selected_location ();
                 if (location != null)
                     add_location ((GWeather.Location) location);
-            }
 
-            dialog.destroy ();
-        });
-        dialog.show ();
+                dialog.destroy ();
+            });
+        dialog.present ();
     }
 
     private void reset_view () {
-        visible_child = locations.get_n_items () == 0 ? empty_view : list_view;
+        stack.visible_child = locations.get_n_items () == 0 ? empty_view : list_view;
     }
 }
 

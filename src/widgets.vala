@@ -171,7 +171,7 @@ public class AmPmToggleButton : Gtk.Button {
     public AmPmToggleButton () {
         stack = new Gtk.Stack ();
 
-        get_style_context ().add_class ("clocks-ampm-toggle-button");
+        add_css_class ("clocks-ampm-toggle-button");
 
         var str = (new GLib.DateTime.utc (1, 1, 1, 0, 0, 0)).format ("%p");
         am_label = new Gtk.Label (str);
@@ -179,9 +179,9 @@ public class AmPmToggleButton : Gtk.Button {
         str = (new GLib.DateTime.utc (1, 1, 1, 12, 0, 0)).format ("%p");
         pm_label = new Gtk.Label (str);
 
-        stack.add (am_label);
-        stack.add (pm_label);
-        add (stack);
+        stack.add_child (am_label);
+        stack.add_child (pm_label);
+        set_child (stack);
 
         clicked.connect (() => {
             choice = choice == AmPm.AM ? AmPm.PM : AmPm.AM;
@@ -189,7 +189,6 @@ public class AmPmToggleButton : Gtk.Button {
 
         choice = AmPm.AM;
         stack.visible_child = am_label;
-        show_all ();
     }
 }
 

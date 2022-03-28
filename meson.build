@@ -1,45 +1,24 @@
 project(
   'gnome-clocks',
   ['vala', 'c'],
-  version: '41.0',
-  license: 'GPL2+',
-  meson_version: '>= 0.50.0',
+  version: '42.0',
+  license: 'GPL-2.0-or-later',
+  meson_version: '>= 0.59.0',
 )
 
 gnome = import('gnome')
 i18n = import('i18n')
-python3 = import('python3')
 
 glib = dependency('glib-2.0', version: '>= 2.68')
 gio = dependency('gio-2.0', version: '>= 2.58')
 gobject = dependency('gobject-2.0', version: '>= 2.58')
-gtk = dependency('gtk+-3.0', version: '>=3.20')
+gtk = dependency('gtk4', version: '>= 4.5')
 gsound = dependency('gsound', version: '>=0.98')
-gweather = dependency('gweather-3.0', version: '>=3.32.0')
-gnomedesktop = dependency('gnome-desktop-3.0', version: '>=3.8')
+gweather = dependency('gweather4')
+gnomedesktop = dependency('gnome-desktop-4')
 geocodeglib = dependency('geocode-glib-1.0', version: '>=1.0')
 libgeoclue = dependency('libgeoclue-2.0', version: '>=2.4')
-libhandy = dependency ('libhandy-1', version: '>= 1.0.0', required: false)
-
-libhandy_subproj = libhandy
-if not libhandy.found()
-  libhandy_subproj = subproject(
-    'libhandy',
-    default_options: [
-      'examples=false',
-      'glade_catalog=disabled',
-      'tests=false',
-    ]
-  )
-
-  # When using libhandy as subproject, make sure we get the VAPI file
-  libhandy = declare_dependency(
-    dependencies: [
-      libhandy_subproj.get_variable('libhandy_dep'),
-      libhandy_subproj.get_variable('libhandy_vapi'),
-    ]
-  )
-endif
+libadwaita = dependency ('libadwaita-1', version: '>=1.0')
 
 cc = meson.get_compiler('c')
 math = cc.find_library('m', required: false)
@@ -83,10 +62,13 @@ endif
 configure_file(output: 'config.h', configuration: conf)
 config_h_dir = include_directories('.')
 
-meson.add_install_script(python3.find_python().path(),
-  join_paths(meson.source_root(), 'build-aux', 'post-install.py'))
-
 subdir('data')
 subdir('help')
 subdir('po')
 subdir('src')
+
+gnome.post_install(
+  glib_compile_schemas: true,
+  gtk_update_icon_cache: true,
+  update_desktop_database: true,
+)

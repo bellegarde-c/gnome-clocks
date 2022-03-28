@@ -29,11 +29,13 @@ private class ClockLocation : Object {
 }
 
 [GtkTemplate (ui = "/org/gnome/clocks/ui/world-location-dialog.ui")]
-private class LocationDialog : Gtk.Dialog {
+private class LocationDialog : Gtk.Window {
     [GtkChild]
     private unowned Gtk.Stack stack;
     [GtkChild]
-    private unowned Gtk.Box empty_search_box;
+    private unowned Gtk.Widget empty_search;
+    [GtkChild]
+    private unowned Gtk.Widget search_results;
     [GtkChild]
     private unowned Gtk.SearchEntry location_entry;
     [GtkChild]
@@ -56,13 +58,12 @@ private class LocationDialog : Gtk.Dialog {
     private const int RESULT_COUNT_LIMIT = 12;
 
     public LocationDialog (Gtk.Window parent, Face world_face) {
-        Object (transient_for: parent, use_header_bar: 1);
+        Object (transient_for: parent);
 
-        key_press_event.connect ((event) => {
-            if (event.keyval == Gdk.Key.Tab)
-                return Gdk.EVENT_PROPAGATE;
-            return location_entry.handle_event (event);
-        });
+        // HACK: We set the key capture widget on the entry
+        // rather than the search bar. This way when pressing
+        // TAB the widget will continue to get input events.
+        location_entry.set_key_capture_widget (this);
 
         world = world_face;
 
@@ -76,6 +77,14 @@ private class LocationDialog : Gtk.Dialog {
         if (selected_row == null)
             return null;
         return ((LocationDialogRow) selected_row).data.location;
+    }
+
+    [GtkCallback]
+    private void on_search_mode_notify (GLib.Object object, GLib.ParamSpec param) {
+        // Pressing ESC will close the search bar, we don't want that.
+        var search_bar = (Gtk.SearchBar) object;
+        if (!search_bar.search_mode_enabled)
+            search_bar.search_mode_enabled = true;
     }
 
     [GtkCallback]
@@ -102,7 +111,7 @@ private class LocationDialog : Gtk.Dialog {
         locations.remove_all ();
 
         if (location_entry.text == "") {
-            stack.visible_child = empty_search_box;
+            stack.visible_child = empty_search;
             return;
         }
 
@@ -115,7 +124,7 @@ private class LocationDialog : Gtk.Dialog {
         query_locations ((GWeather.Location) world_location, search);
 
         if (locations.get_n_items () == 0) {
-            stack.visible_child = empty_search_box;
+            stack.visible_child = empty_search;
             return;
         }
         locations.sort ((a, b) => {
@@ -124,7 +133,15 @@ private class LocationDialog : Gtk.Dialog {
             return strcmp (name_a, name_b);
         });
 
-        stack.visible_child = listbox;
+        stack.visible_child = search_results;
+    }
+
+    public signal void location_added ();
+
+    [GtkCallback]
+    private void add_button_clicked () {
+        location_added ();
+        close ();
     }
 
     private void query_locations (GWeather.Location location, string search) {
@@ -143,7 +160,7 @@ private class LocationDialog : Gtk.Dialog {
                 string? timezone_name = null;
                 var timezone = location.get_timezone ();
                 if (timezone != null) {
-                    timezone_name = ((GWeather.Timezone) timezone).get_name ();
+                    timezone_name = timezone.get_identifier ();
                     if (timezone_name != null) {
                         timezone_name = ((string) timezone_name).normalize ().casefold ();
                     }
@@ -164,11 +181,14 @@ private class LocationDialog : Gtk.Dialog {
             default:
                 break;
         }
-        foreach (var child in location.get_children ()) {
-            query_locations (child, search);
+
+        var loc = location.next_child (null);
+        while (loc != null) {
+            query_locations (loc, search);
             if (locations.get_n_items () >= RESULT_COUNT_LIMIT) {
                 return;
             }
+            loc = location.next_child (loc);
         }
     }
 }
