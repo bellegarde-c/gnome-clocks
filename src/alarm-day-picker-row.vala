@@ -21,7 +21,7 @@ namespace Clocks {
 namespace Alarm {
 
 [GtkTemplate (ui = "/org/gnome/clocks/ui/alarm-day-picker-row.ui")]
-public class DayPickerRow : Hdy.ActionRow {
+public class DayPickerRow : Gtk.ListBoxRow {
     public bool monday {
         get {
             return days[Utils.Weekdays.Day.MON];
@@ -104,7 +104,7 @@ public class DayPickerRow : Hdy.ActionRow {
     private Utils.Weekdays days = new Utils.Weekdays ();
 
     [GtkChild]
-    private unowned Gtk.FlowBox flow;
+    private unowned Gtk.Box box;
 
     construct {
         // Create actions to control propeties from menu items
@@ -126,8 +126,8 @@ public class DayPickerRow : Hdy.ActionRow {
             buttons[i] = new Gtk.ToggleButton.with_label (day.symbol ());
             buttons[i].action_name = "repeats.day-%i".printf (i);
             buttons[i].tooltip_text = day.name ();
-            buttons[i].get_style_context ().add_class ("circular");
-            buttons[i].show ();
+            buttons[i].add_css_class ("circular");
+            buttons[i].halign = Gtk.Align.START;
         }
 
         // Add the items, starting with the first day of the week
@@ -136,12 +136,7 @@ public class DayPickerRow : Hdy.ActionRow {
         for (int i = 0; i < 7; i++) {
             var day_number = (first_weekday + i) % 7;
 
-            var wrap = new Gtk.FlowBoxChild ();
-            wrap.can_focus = false;
-            wrap.add (buttons[day_number]);
-            wrap.show ();
-
-            flow.add (wrap);
+            box.append (buttons[day_number]);
         }
 
         update ();

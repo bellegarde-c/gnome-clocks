@@ -19,26 +19,28 @@
 namespace Clocks {
 
 [GtkTemplate (ui = "/org/gnome/clocks/ui/window.ui")]
-public class Window : Hdy.ApplicationWindow {
+public class Window : Adw.ApplicationWindow {
     private const GLib.ActionEntry[] ACTION_ENTRIES = {
         // primary menu
-        { "show-primary-menu", on_show_primary_menu_activate, null, "false", null },
+        { "show-primary-menu", on_show_primary_menu_activate },
         { "new", on_new_activate },
         { "back", on_back_activate },
         { "help", on_help_activate },
+        { "navigate-forward", on_navigate_forward },
+        { "navigate-backward", on_navigate_backward },
         { "about", on_about_activate },
     };
 
     [GtkChild]
     private unowned HeaderBar header_bar;
     [GtkChild]
-    private unowned Hdy.Deck alarm_deck;
+    private unowned Adw.Leaflet alarm_leaflet;
     [GtkChild]
-    private unowned Hdy.Deck world_deck;
+    private unowned Adw.Leaflet world_leaflet;
     [GtkChild]
     private unowned Gtk.Box main_view;
     [GtkChild]
-    private unowned Gtk.Stack stack;
+    private unowned Adw.ViewStack stack;
     [GtkChild]
     private unowned World.Face world;
     [GtkChild]
@@ -60,6 +62,23 @@ public class Window : Hdy.ApplicationWindow {
 
     private bool inited = false;
 
+    construct {
+        install_action ("set-page", "s", (Gtk.WidgetActionActivateFunc) on_set_page);
+
+        add_binding_action (Gdk.Key.@1,
+                            Gdk.ModifierType.ALT_MASK,
+                            "set-page", "s", "world");
+        add_binding_action (Gdk.Key.@2,
+                            Gdk.ModifierType.ALT_MASK,
+                            "set-page", "s", "alarm");
+        add_binding_action (Gdk.Key.@3,
+                            Gdk.ModifierType.ALT_MASK,
+                            "set-page", "s", "stopwatch");
+        add_binding_action (Gdk.Key.@4,
+                            Gdk.ModifierType.ALT_MASK,
+                            "set-page", "s", "timer");
+    }
+
     public Window (Application app) {
         Object (application: app);
 
@@ -68,45 +87,31 @@ public class Window : Hdy.ApplicationWindow {
         settings = new Settings ("org.gnome.clocks.state.window");
         settings.delay ();
 
-        // We need to set this manually, otherwise it fails in the devel version
-        var builder = new Gtk.Builder.from_resource ("/org/gnome/clocks/gtk/help-overlay.ui");
-        var dialog = (Gtk.ShortcutsWindow)builder.get_object ("help_overlay");
-        set_help_overlay (dialog);
-
         // GSettings gives us the nick, which matches the stack page name
         stack.visible_child_name = settings.get_string ("panel-id");
 
         inited = true;
 
-        header_bar.bind_property ("title", this, "title", SYNC_CREATE);
-
         pane_changed ();
 
-        // Setup window geometry saving
-        var window_state = (Gdk.WindowState) settings.get_int ("state");
-        if (Gdk.WindowState.MAXIMIZED in window_state) {
-            maximize ();
-        } else {
-            int width, height;
-            settings.get ("size", "(ii)", out width, out height);
-            resize (width, height);
-        }
+        load_window_state ();
 
         world.show_standalone.connect ((w, l) => {
             stack.visible_child = w;
             world_standalone.location = l;
-            world_deck.navigate (Hdy.NavigationDirection.FORWARD);
+            world_leaflet.navigate (Adw.NavigationDirection.FORWARD);
         });
 
         alarm.ring.connect ((w, a) => {
             close_standalone ();
             stack.visible_child = w;
             alarm_ringing_panel.alarm = a;
-            alarm_deck.visible_child = alarm_ringing_panel;
+            alarm_leaflet.visible_child = alarm_ringing_panel;
         });
 
         stopwatch.notify["state"].connect ((w) => {
-            stack.child_set_property (stopwatch, "needs-attention", stopwatch.state == Stopwatch.Face.State.RUNNING);
+            var stopwatch_stack_page = stack.get_page (stopwatch);
+            stopwatch_stack_page.needs_attention = (stopwatch.state == Stopwatch.Face.State.RUNNING);
         });
 
         timer.ring.connect ((w) => {
@@ -116,47 +121,12 @@ public class Window : Hdy.ApplicationWindow {
 
 
         timer.notify["is-running"].connect ((w) => {
-            stack.child_set_property (timer, "needs-attention", timer.is_running);
+            var timer_stack_page = stack.get_page (timer);
+            timer_stack_page.needs_attention = timer.is_running;
         });
 
-        unowned Gtk.BindingSet binding_set = Gtk.BindingSet.by_class (get_class ());
-
-        // plain ctrl+page_up/down is easten by the scrolled window...
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.Page_Up,
-                                     Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK,
-                                     "change-page", 1,
-                                     typeof (int), 0);
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.Page_Down,
-                                     Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK,
-                                     "change-page", 1,
-                                     typeof (int), 1);
-
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.@1,
-                                     Gdk.ModifierType.MOD1_MASK,
-                                     "set-page", 1,
-                                     typeof (string), "world");
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.@2,
-                                     Gdk.ModifierType.MOD1_MASK,
-                                     "set-page", 1,
-                                     typeof (string), "alarm");
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.@3,
-                                     Gdk.ModifierType.MOD1_MASK,
-                                     "set-page", 1,
-                                     typeof (string), "stopwatch");
-        Gtk.BindingEntry.add_signal (binding_set,
-                                     Gdk.Key.@4,
-                                     Gdk.ModifierType.MOD1_MASK,
-                                     "set-page", 1,
-                                     typeof (string), "timer");
-
-        Gtk.StyleContext style = get_style_context ();
         if (Config.PROFILE == "Devel") {
-            style.add_class ("devel");
+            add_css_class ("devel");
         }
     }
 
@@ -207,9 +177,8 @@ public class Window : Hdy.ApplicationWindow {
         stack.visible_child_name = page;
     }
 
-    private void on_show_primary_menu_activate (SimpleAction action) {
-        var state = ((!) action.get_state ()).get_boolean ();
-        action.set_state (new Variant.boolean (!state));
+    private void on_show_primary_menu_activate () {
+        header_bar.show_primary_menu ();
     }
 
     private void on_new_activate () {
@@ -217,7 +186,7 @@ public class Window : Hdy.ApplicationWindow {
     }
 
     private void on_back_activate () {
-        world_deck.navigate (Hdy.NavigationDirection.BACK);
+        world_leaflet.navigate (Adw.NavigationDirection.BACK);
     }
 
     public void show_world () {
@@ -229,70 +198,59 @@ public class Window : Hdy.ApplicationWindow {
         world.add_location (location);
     }
 
-    public override void destroy () {
+    public override bool close_request () {
+        save_window_state ();
+        return base.close_request ();
+    }
+
+    private void load_window_state () {
+        var window_maximized = settings.get_boolean ("maximized");
+        if (window_maximized) {
+            maximize ();
+        } else {
+            int width, height;
+            settings.get ("size", "(ii)", out width, out height);
+            set_default_size (width, height);
+        }
+    }
+
+    private void save_window_state () {
+        var width = 0;
+        var height = 0;
+
+        get_default_size (out width, out height);
+
+        debug ("Saving window geometry: %i × %i", width, height);
+
+        settings.set ("size", "(ii)", width, height);
+
+        settings.set_boolean ("maximized", is_maximized ());
         settings.apply ();
     }
 
-    public override bool delete_event (Gdk.EventAny event) {
-        settings.apply ();
-
-        return hide_on_delete ();
+    [GtkCallback]
+    private void enter_cb (Gtk.EventControllerFocus controller) {
+        ((Application) application).withdraw_notifications ();
     }
 
-    public override bool key_press_event (Gdk.EventKey event) {
-        uint keyval;
+    [GtkCallback]
+    private bool key_press_cb (Gtk.EventControllerKey controller, uint keyval, uint keycode, Gdk.ModifierType mod_state) {
         bool handled = false;
+        var state = mod_state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK);
 
-        if (((Gdk.Event)(event)).get_keyval (out keyval) && keyval == Gdk.Key.Escape) {
-            if (world_deck.visible_child == main_view) {
+        if (keyval == Gdk.Key.Escape && state == 0) {
+            if (world_leaflet.visible_child == main_view) {
                 handled = ((Clock) stack.visible_child).escape_pressed ();
             } else {
-                world_deck.navigate (Hdy.NavigationDirection.BACK);
+                world_leaflet.navigate (Adw.NavigationDirection.BACK);
             }
         }
 
-        if (handled) {
-            return true;
-        }
-
-        return base.key_press_event (event);
-    }
-
-    public override bool button_release_event (Gdk.EventButton event) {
-        const uint BUTTON_BACK = 8;
-        uint button;
-
-        if (((Gdk.Event) (event)).get_button (out button) && button == BUTTON_BACK) {
-            on_back_activate ();
-            return true;
-        }
-
-        return base.button_release_event (event);
-    }
-
-    protected override bool configure_event (Gdk.EventConfigure event) {
-        if (get_realized () && !(Gdk.WindowState.MAXIMIZED in ((Gdk.Window) get_window ()).get_state ())) {
-            int width, height;
-
-            get_size (out width, out height);
-            settings.set ("size", "(ii)", width, height);
-        }
-
-        return base.configure_event (event);
-    }
-
-    protected override bool window_state_event (Gdk.EventWindowState event) {
-        settings.set_int ("state", event.new_window_state);
-
-        return base.window_state_event (event);
+        return handled;
     }
 
     private void on_help_activate () {
-        try {
-            Gtk.show_uri_on_window (this, "help:gnome-clocks", Gtk.get_current_event_time ());
-        } catch (Error e) {
-            warning (_("Failed to show help: %s"), e.message);
-        }
+        Gtk.show_uri (this, "help:gnome-clocks", Gdk.CURRENT_TIME);
     }
 
     private void on_about_activate () {
@@ -370,24 +328,67 @@ public class Window : Hdy.ApplicationWindow {
 
     [GtkCallback]
     private void visible_child_changed () {
-        if (alarm_deck.visible_child == alarm_ringing_panel) {
+        if (alarm_leaflet.visible_child == alarm_ringing_panel) {
             title = _("Alarm");
-        } else if (world_deck.visible_child == world_standalone) {
+        } else if (world_leaflet.visible_child == world_standalone) {
             title = world_standalone.title;
         } else {
             title = _("Clocks");
         }
 
-        deletable = (alarm_deck.visible_child != alarm_ringing_panel);
+        deletable = (alarm_leaflet.visible_child != alarm_ringing_panel);
     }
 
     [GtkCallback]
     private void alarm_dismissed () {
-        alarm_deck.visible_child = world_deck;
+        alarm_leaflet.visible_child = world_leaflet;
     }
 
     private void close_standalone () {
-        world_deck.visible_child = main_view;
+        world_leaflet.visible_child = main_view;
+    }
+
+    private void on_navigate_forward () {
+        var current = stack.visible_child_name;
+        switch (current) {
+        case "world":
+            stack.visible_child_name = "alarm";
+            break;
+        case "alarm":
+            stack.visible_child_name = "stopwatch";
+            break;
+        case "stopwatch":
+            stack.visible_child_name = "timer";
+            break;
+        case "timer":
+            stack.visible_child_name = "world";
+            break;
+        }
+    }
+
+    private void on_navigate_backward () {
+        var current = stack.visible_child_name;
+        switch (current) {
+        case "world":
+            stack.visible_child_name = "timer";
+            break;
+        case "alarm":
+            stack.visible_child_name = "world";
+            break;
+        case "stopwatch":
+            stack.visible_child_name = "alarm";
+            break;
+        case "timer":
+            stack.visible_child_name = "stopwatch";
+            break;
+        }
+    }
+
+    private void on_set_page (string action_name, Variant? param) {
+        if (param != null) {
+            var page = param.get_string ();
+            stack.visible_child_name = page;
+        }
     }
 }
 

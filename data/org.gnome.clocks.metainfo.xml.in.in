@@ -2,8 +2,8 @@
 <component type="desktop-application">
   <id>@appid@.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-2.0</project_license>
-  <name>GNOME Clocks</name>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>Clocks</name>
   <summary>Clocks for world times, plus alarms, stopwatch and a timer</summary>
   <description>
     <p>
@@ -26,6 +26,14 @@
     <kudo>SearchProvider</kudo>
     <kudo>UserDocs</kudo>
   </kudos>
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </recommends>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
   <screenshots>
     <screenshot type="default">
       <image>https://gitlab.gnome.org/GNOME/gnome-clocks/raw/master/data/appdata/world.png</image>
@@ -34,10 +42,6 @@
     <screenshot>
       <image>https://gitlab.gnome.org/GNOME/gnome-clocks/raw/master/data/appdata/alarm.png</image>
       <caption>Alarms screen</caption>
-    </screenshot>
-    <screenshot>
-      <image>https://gitlab.gnome.org/GNOME/gnome-clocks/raw/master/data/appdata/alarm-setup.png</image>
-      <caption>Alarms setup</caption>
     </screenshot>
     <screenshot>
       <image>https://gitlab.gnome.org/GNOME/gnome-clocks/raw/master/data/appdata/stopwatch.png</image>
@@ -49,6 +53,11 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="42.0" date="2022-03-19">
+      <description>
+        <p>GTK 4 / libadwaita port</p>
+      </description>
+    </release>
     <release version="41.0" date="2021-10-17" type="stable">
       <description>
         <p>A new release of Clocks</p>

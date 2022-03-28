@@ -1,59 +1,14 @@
-window > stack {
-	background-color: mix(@theme_fg_color, @theme_bg_color, 0.95);
-	box-shadow: inset 0 5px 2px -6px black;
-}
-
-window > stack:backdrop {
-	background-color: mix(@theme_unfocused_fg_color, @theme_unfocused_bg_color, 0.95);
-	box-shadow: none;
-}
-
-label.destructive-action {
-	color: #e01b24;
-}
-
 /* Shared */
 
-.clocks-list {
-	margin: 18px 6px;
-}
-
 .large-button {
-	padding: 6px 32px;
-}
-
-.circular.flat {
-	padding: 4px;
-}
-
-.pill-button, .circular.flat {
-	border-radius: 9999px;
-	-gtk-outline-radius: 9999px;
+	padding: 6px;
 }
 
 /* alarms */
 
-row.snoozing {
-	background: transparent -gtk-icontheme("alarm-symbolic") 65% 400%/48px 48px no-repeat;
-	font-weight: bold;
-}
-
-.alarm-row button, .repeats button {
-	min-width: 24px;
-	min-height: 24px;
-}
-
-.alarm-name {
-	font-weight: bold;
-}
-
 .alarm-time {
 	font-size: 2.5em;
 	font-weight: 300;
-}
-
-.alarm-repeat {
-	font-size: 9pt;
 }
 
 .clocks-ampm-toggle-button {
@@ -75,7 +30,6 @@ row.snoozing {
 	font-size: 18pt;
 }
 
-
 .clocks-alarm-setup-time {
 	font-size: 32pt;
 }
@@ -92,31 +46,6 @@ row.snoozing {
 
 /* disguise insensitive spinbuttons as normal labels */
 
-spinbutton.clocks-timer-label,
-spinbutton.clocks-timer-label button,
-spinbutton.clocks-timer-label entry {
-	border-color: transparent;
-	background-color: transparent;
-	background-image: none;
-	box-shadow: none;
-}
-
-spinbutton.clocks-timer-label {
-	color: @theme_fg_color;
-}
-
-spinbutton.clocks-timer-label button {
-	color: transparent;
-}
-
-.timer-panel .small-button {
-	padding: 5px 9px
-}
-
-.timer-panel .large-button {
-	padding: 12px 16px;
-}
-
 .timer-panel .timer-header {
 	font-size: 20pt;
 	font-weight: 300;
@@ -125,24 +54,6 @@ spinbutton.clocks-timer-label button {
 .timer-countdown {
 	font-size: 40pt;
 	font-weight: 300;
-	color: #9E9DA1;
-}
-
-@keyframes clocks-blink {
-	0% { color: #9E9DA1; }
-	100% { color: #428be5; }
-}
-
-.timer-countdown.timer-paused {
-	color: #9E9DA1;
-	animation-name: clocks-blink;
-	animation-iteration-count: infinite;
-	animation-timing-function: cubic-bezier(1.0,0,0,1.0);
-	animation-duration: 1s;
-}
-
-.timer-countdown.timer-running {
-	color: #428be5;
 }
 
 /* Stopwatch Panel */
@@ -150,19 +61,10 @@ spinbutton.clocks-timer-label button {
 	font-weight: bold;
 }
 
-.negative-lap {
-	color: #ED333B;
-}
-
-.positive-lap {
-	color: #428be5;
-}
-
 .stopped-stopwatch label,
 .running-stopwatch label,
 .paused-stopwatch label {
 	font-size: 70px;
-	color: grey;
 	font-weight: lighter;
 }
 
@@ -172,7 +74,7 @@ spinbutton.clocks-timer-label button {
 
 .running-stopwatch .seconds-label,
 .running-stopwatch .miliseconds-label {
-	color: #428be5;
+	color: @accent_color;
 }
 
 .stopped-stopwatch .miliseconds-label,
@@ -186,59 +88,39 @@ spinbutton.clocks-timer-label button {
 	font-weight: 300;
 }
 
-.stopped-stopwatch .seconds-label,
-.stopped-stopwatch .miliseconds-label,
-.paused-stopwatch .seconds-label,
-.paused-stopwatch .miliseconds-label {
-	color: black;
-}
-
 /* World */
-
-.clock-title {
-	font-size: 1.1em;
-}
 
 .clock-location {
 	font-weight: bolder;
 }
 
-.clock-desc {
-	font-size: 0.9em;
+.hidden {
+	opacity: 0;
 }
 
 .clock-time {
 	font-size: 2em;
 	padding: 0.2em 0.5em;
 	border-radius: 1em;
-	background: #e5a50a;
-	color: #000000;
-	font-weight: 300;
-	border: 1px solid rgba(0, 0, 0, 0.06);
-	transition: 0.4s background ease-in;
 }
 
 .none .clock-time {
-	background: #f6f5f4;
+	background: alpha(currentColor, 0.2);
 }
 
 .night .clock-time {
-	background: #a0a2b7;
+	color: @blue_4;
+	background-color: alpha(@blue_3, 0.25);
 }
 
+.naut .clock-time,
 .astro .clock-time {
-	background: #c6adaa;
+	color: @orange_5;
+	background-color: alpha(@orange_4, 0.25);
 }
 
-.naut .clock-time {
-	background: #ecb89c;
-}
-
-.civil .clock-time {
-	background: #FAE189;
-}
-
+.civil .clock-time,
 .day .clock-time {
-	background: #fcf7b0;
+	color: #ae7b03;
+	background: alpha(@yellow_5, 0.25);
 }
-

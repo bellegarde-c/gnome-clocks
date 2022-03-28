@@ -1,28 +1,3 @@
-window > stack {
-	background-color: @theme_bg_color;
-	box-shadow: none;
-}
-
-window > stack:backdrop {
-	background-color: @theme_unfocused_bg_color;
-	box-shadow: none;
-}
-
-label.destructive-action {
-	color: #e01b24;
-}
-
-/* alarms */
-
-row.snoozing {
-	background: transparent -gtk-icontheme("alarm-symbolic") 65% 400%/48px 48px no-repeat;
-	font-weight: bold;
-}
-
-/* World */
-
 .clock-time {
-	background: transparent;
-	color: #000000;
-	font-weight: normal;
+	font-weight: bold;
 }

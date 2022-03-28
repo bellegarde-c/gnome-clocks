@@ -18,7 +18,7 @@
 
 namespace Clocks {
 
-public class Application : Gtk.Application {
+public class Application : Adw.Application {
     const OptionEntry[] OPTION_ENTRIES = {
         { "version", 'v', 0, OptionArg.NONE, null, N_("Print version information and exit"), null },
         { (string) null }
@@ -46,7 +46,8 @@ public class Application : Gtk.Application {
     }
 
     public Application () {
-        Object (application_id: Config.APP_ID);
+        Object (application_id: Config.APP_ID,
+                resource_base_path: "/org/gnome/clocks/");
 
         Gtk.Window.set_default_icon_name (Config.APP_ID);
 
@@ -97,44 +98,17 @@ public class Application : Gtk.Application {
 
         var win = ensure_window ();
         win.present ();
-
-        win.focus_in_event.connect (() => {
-            withdraw_notifications ();
-
-            return false;
-        });
-    }
-
-    private void update_theme (Gtk.Settings settings) {
-        string theme_name;
-
-        settings.get ("gtk-theme-name", out theme_name);
-        Utils.load_css ("gnome-clocks." + theme_name.down ());
     }
 
     protected override void startup () {
         base.startup ();
 
-        Hdy.init ();
-
-        Utils.load_css ("gnome-clocks");
-
-        set_resource_base_path ("/org/gnome/clocks/");
-
-        var theme = Gtk.IconTheme.get_default ();
-        theme.add_resource_path ("/org/gnome/clocks/icons");
-
-        var settings = (Gtk.Settings) Gtk.Settings.get_default ();
-        settings.notify["gtk-theme-name"].connect (() => {
-            update_theme (settings);
-        });
-        update_theme (settings);
-
-        set_accels_for_action ("win.new", { "<Primary>n" });
+        set_accels_for_action ("win.new", { "<Control>n" });
         set_accels_for_action ("win.show-primary-menu", { "F10" });
-        set_accels_for_action ("win.show-help-overlay", { "<Primary>question" });
         set_accels_for_action ("win.help", { "F1" });
-        set_accels_for_action ("app.quit", { "<Primary>q" });
+        set_accels_for_action ("app.quit", { "<Control>q" });
+        set_accels_for_action ("win.navigate-backward", { "<Control><Alt>Page_Up" });
+        set_accels_for_action ("win.navigate-forward", { "<Control><Alt>Page_Down" });
     }
 
     protected override int handle_local_options (GLib.VariantDict options) {
@@ -173,7 +147,7 @@ public class Application : Gtk.Application {
         system_notifications.append (notification_id);
     }
 
-    private void withdraw_notifications () {
+    public void withdraw_notifications () {
         foreach (var notification in system_notifications) {
             withdraw_notification (notification);
         }
