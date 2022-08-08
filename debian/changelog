@@ -1,8 +1,10 @@
-gnome-clocks (43~beta-1) UNRELEASED; urgency=medium
+gnome-clocks (43~beta-1) unstable; urgency=medium
 
   * New upstream release
+  * debian/control.in: Bump minimum libadwaita to 1.2~alpha
+  * Drop all patches: no longer needed
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 08 Aug 2022 08:11:48 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 08 Aug 2022 19:10:32 -0400
 
 gnome-clocks (42.0-1) unstable; urgency=medium
 
