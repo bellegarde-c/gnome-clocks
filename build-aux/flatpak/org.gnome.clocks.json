@@ -21,25 +21,14 @@
                 "*.la", "*.a"],
     "modules": [
         {
-            "name": "libgeoclue",
-            "buildsystem": "meson",
-            "config-opts" : [
-                "-Denable-backend=false",
-                "-Dlibgeoclue=true",
-                "-Dintrospection=true",
-                "-Dgtk-doc=false"
-            ],
-            "sources": [
-                {
-                    "type" : "git",
-                    "url": "https://gitlab.freedesktop.org/geoclue/geoclue.git"
-                }
-            ]
-        },
-        {
             "name": "geocode-glib",
             "buildsystem": "meson",
-            "config-opts": [ "-Denable-installed-tests=false", "-Denable-introspection=true", "-Denable-gtk-doc=false" ],
+            "config-opts": [
+                "-Denable-installed-tests=false",
+                "-Denable-introspection=true",
+                "-Denable-gtk-doc=false",
+                "-Dsoup2=false"
+            ],
             "sources": [
                 {
                     "type": "git",
@@ -51,7 +40,6 @@
             "name": "libgweather",
             "buildsystem": "meson",
             "config-opts": [
-              "-Dglade_catalog=false",
               "-Dgtk_doc=false"
             ],
             "sources": [
@@ -71,7 +59,7 @@
               "-Dgtk_doc=false",
               "-Ddesktop_docs=false",
               "-Dlegacy_library=false",
-              "-Dbuild_gtk4=false"
+              "-Dbuild_gtk4=true"
             ],
             "sources": [
                 {
