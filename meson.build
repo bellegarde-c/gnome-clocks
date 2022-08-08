@@ -1,7 +1,7 @@
 project(
   'gnome-clocks',
   ['vala', 'c'],
-  version: '42.0',
+  version: '43.beta',
   license: 'GPL-2.0-or-later',
   meson_version: '>= 0.59.0',
 )
@@ -15,10 +15,15 @@ gobject = dependency('gobject-2.0', version: '>= 2.58')
 gtk = dependency('gtk4', version: '>= 4.5')
 gsound = dependency('gsound', version: '>=0.98')
 gweather = dependency('gweather4')
+gweather_soup_version = gweather.get_pkgconfig_variable('soupapiversion')
+if gweather_soup_version == '3.0'
+  geocodeglib = dependency('geocode-glib-2.0', version: '>=1.0')
+else
+  geocodeglib = dependency('geocode-glib-1.0', version: '>=1.0')
+endif
 gnomedesktop = dependency('gnome-desktop-4')
-geocodeglib = dependency('geocode-glib-1.0', version: '>=1.0')
 libgeoclue = dependency('libgeoclue-2.0', version: '>=2.4')
-libadwaita = dependency ('libadwaita-1', version: '>=1.0')
+libadwaita = dependency ('libadwaita-1', version: '>=1.2.alpha')
 
 cc = meson.get_compiler('c')
 math = cc.find_library('m', required: false)
