@@ -1,3 +1,9 @@
+gnome-clocks (43~beta-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 08 Aug 2022 08:11:48 -0400
+
 gnome-clocks (42.0-1) unstable; urgency=medium
 
   * New upstream release
