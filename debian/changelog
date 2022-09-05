@@ -1,3 +1,9 @@
+gnome-clocks (43~beta-2) unstable; urgency=medium
+
+  * Build against libsoup3 libraries
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 05 Sep 2022 16:25:39 -0400
+
 gnome-clocks (43~beta-1) unstable; urgency=medium
 
   * New upstream release
