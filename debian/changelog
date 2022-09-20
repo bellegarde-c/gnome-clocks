@@ -1,8 +1,10 @@
-gnome-clocks (43.0-1) UNRELEASED; urgency=medium
+gnome-clocks (43.0-1) unstable; urgency=medium
 
   * New upstream release
+  * debian/control.in: Set Rules-Requires-Root: no
+  * debian/control.in: Bump Standards-Version to 4.6.1
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 20 Sep 2022 10:49:45 -0400
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 20 Sep 2022 10:56:49 -0400
 
 gnome-clocks (43~beta-2) unstable; urgency=medium
 
