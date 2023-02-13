@@ -21,7 +21,7 @@ Build-Depends: appstream,
                libxml2-utils,
                meson (>= 0.59.0),
                pkg-config,
-               valac (>= 0.32.0)
+               valac (>= 0.56.4)
 Standards-Version: 4.6.1
 Rules-Requires-Root: no
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-clocks

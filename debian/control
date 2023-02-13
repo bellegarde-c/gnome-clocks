@@ -6,7 +6,7 @@ Source: gnome-clocks
 Section: gnome
 Priority: optional
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Iain Lane <laney@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>, Laurent Bigonville <bigon@debian.org>, Tim Lunn <tim@feathertop.org>
+Uploaders: Iain Lane <laney@debian.org>, Jeremy Bicha <jbicha@ubuntu.com>, Laurent Bigonville <bigon@debian.org>
 Build-Depends: appstream,
                appstream-util <!nocheck>,
                debhelper-compat (= 13),
@@ -25,7 +25,7 @@ Build-Depends: appstream,
                libxml2-utils,
                meson (>= 0.59.0),
                pkg-config,
-               valac (>= 0.32.0)
+               valac (>= 0.56.4)
 Standards-Version: 4.6.1
 Rules-Requires-Root: no
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-clocks
