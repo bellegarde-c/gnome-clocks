@@ -55,19 +55,29 @@ private class Item : Object, ContentItem {
 
     public AlarmTime time { get; set; }
 
-    public Utils.Weekdays? days { get; set; }
+    private Utils.Weekdays? _days;
+    public Utils.Weekdays? days {
+        get {
+            return _days;
+        }
+
+        set {
+            _days = value;
+            notify_property ("days-label");
+        }
+    }
 
     public State state { get; private set; }
 
     public string time_label {
          owned get {
-            return Utils.WallClock.get_default ().format_time (alarm_time);
+            return Utils.WallClock.get_default ().format_time (alarm_time, false);
          }
     }
 
     public string snooze_time_label {
          owned get {
-            return Utils.WallClock.get_default ().format_time (snooze_time);
+            return Utils.WallClock.get_default ().format_time (snooze_time, false);
          }
     }
 
@@ -86,11 +96,12 @@ private class Item : Object, ContentItem {
         set {
             if (value != _active) {
                 _active = value;
-                if (_active) {
-                    reset ();
-                } else if (state == State.RINGING) {
+
+                reset ();
+                if (!active && state == State.RINGING) {
                     stop ();
                 }
+
                 notify_property ("active");
             }
         }
