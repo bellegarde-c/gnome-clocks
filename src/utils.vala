@@ -63,14 +63,14 @@ public string get_time_difference_message (double offset) {
     if (diff > 0) {
         // Translators: The (possibly fractical) number hours in the past
         // (relative to local) the clock/location is
-        message = ngettext ("%s hour earlier",
-                            "%s hours earlier",
+        message = ngettext ("%s hour behind",
+                            "%s hours behind",
                             ((int) diff).abs ()).printf (diff_string);
     } else if (diff < 0) {
         // Translators: The (possibly fractical) number hours in the
         // future (relative to local) the clock/location is
-        message = ngettext ("%s hour later",
-                            "%s hours later",
+        message = ngettext ("%s hour ahead",
+                            "%s hours ahead",
                             ((int) diff).abs ()).printf (diff_string);
     }
     return message;
@@ -99,8 +99,17 @@ public class WallClock : Object {
     public GLib.DateTime date_time { get; private set; }
     public GLib.TimeZone timezone { get; private set; }
     public Format format { get; private set; }
+    public bool seconds_precision {
+        get {
+            return wc.force_seconds;
+        }
+        set {
+            wc.force_seconds = value;
+        }
+    }
 
     private GLib.Settings settings;
+
     private Gnome.WallClock wc;
 
     private WallClock () {
@@ -140,8 +149,14 @@ public class WallClock : Object {
         date_time = new GLib.DateTime.now (timezone);
     }
 
-    public string format_time (GLib.DateTime date_time) {
-        string time = date_time.format (format == Format.TWELVE ? "%I:%M %p" : "%H:%M");
+    public string format_time (GLib.DateTime date_time, bool seconds) {
+        string time;
+
+        if (seconds) {
+            time = date_time.format (format == Format.TWELVE ? "%I:%M:%S %p" : "%H:%M:%S");
+        } else {
+            time = date_time.format (format == Format.TWELVE ? "%I:%M %p" : "%H:%M");
+        }
 
         // Replace ":" with ratio, space with thin-space, and prepend LTR marker
         // to force direction. Replacement is done afterward because date_time.format

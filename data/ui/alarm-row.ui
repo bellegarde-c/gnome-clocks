@@ -63,7 +63,6 @@
             <property name="spacing">12</property>
             <child>
               <object class="GtkSwitch" id="toggle">
-                <property name="tooltip_text" translatable="yes">Active</property>
                 <property name="valign">center</property>
               </object>
             </child>
@@ -85,4 +84,7 @@
       </object>
     </child>
   </template>
+  <object class="GBindingGroup" id="alarm_binds">
+    <property name="source" bind-source="ClocksAlarmRow" bind-property="alarm" bind-flags="sync-create"/>
+  </object>
 </interface>
