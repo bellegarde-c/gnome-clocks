@@ -1,8 +1,9 @@
-gnome-clocks (44~beta-1) UNRELEASED; urgency=medium
+gnome-clocks (44~beta-1) experimental; urgency=medium
 
   * New upstream release
+  * debian/control.in: Bump minimum vala to 0.56.4 & gnome-desktop to 44~beta
 
- -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 13 Feb 2023 10:04:48 -0500
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 14 Feb 2023 08:06:35 -0500
 
 gnome-clocks (43.0-1) unstable; urgency=medium
 
