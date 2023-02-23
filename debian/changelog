@@ -1,3 +1,10 @@
+gnome-clocks (44~beta-2) experimental; urgency=medium
+
+  * Add debian/upstream/metadata
+  * Update standards version to 4.6.2, no changes needed
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 23 Feb 2023 18:00:32 -0500
+
 gnome-clocks (44~beta-1) experimental; urgency=medium
 
   * New upstream release
