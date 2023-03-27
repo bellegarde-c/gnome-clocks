@@ -1,3 +1,9 @@
+gnome-clocks (44.0-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 27 Mar 2023 12:13:35 -0400
+
 gnome-clocks (44~beta-2) experimental; urgency=medium
 
   * Add debian/upstream/metadata
