@@ -73,8 +73,8 @@ public class SearchProvider : Object {
         }
     }
 
-    private async void search_locations_recurse (GWeather.Location location, string[] normalized_terms,
-                                                 GenericArray<GWeather.Location> matches) {
+    private void search_locations_recurse (GWeather.Location location, string[] normalized_terms,
+                                           GenericArray<GWeather.Location> matches) {
         var loc = location.next_child (null);
         while (loc != null) {
             var level = loc.get_level ();
@@ -84,7 +84,7 @@ public class SearchProvider : Object {
                 }
             }
 
-            yield search_locations_recurse (loc, normalized_terms, matches);
+            search_locations_recurse (loc, normalized_terms, matches);
             loc = location.next_child (loc);
         }
     }
@@ -97,9 +97,7 @@ public class SearchProvider : Object {
             return {};
         }
 
-        yield search_locations_recurse ((GWeather.Location) world,
-                                        normalized_terms,
-                                        matches);
+        search_locations_recurse ((GWeather.Location) world, normalized_terms, matches);
 
         string[] result = {};
         matches.foreach ((location) => {
@@ -116,10 +114,14 @@ public class SearchProvider : Object {
     }
 
     public async string[] get_initial_result_set (string[] terms) throws GLib.DBusError, GLib.IOError {
+        renew_inactivity_timeout ();
+
         return yield search_locations (normalize_terms (terms));
     }
 
     public async string[] get_subsearch_result_set (string[] previous_results, string[] terms) throws GLib.DBusError, GLib.IOError {
+        renew_inactivity_timeout ();
+
         var normalized_terms = normalize_terms (terms);
 
         if (previous_results.length == 0) {
@@ -173,6 +175,13 @@ public class SearchProvider : Object {
     }
 
     public void launch_search (string[] terms, uint32 timestamp) throws GLib.DBusError, GLib.IOError {
+    }
+
+    private void renew_inactivity_timeout () {
+        var app = GLib.Application.get_default ();
+
+        app.hold ();
+        app.release ();
     }
 }
 

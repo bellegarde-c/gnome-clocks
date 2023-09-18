@@ -22,7 +22,7 @@
 }
 
 .clocks-standalone-label-small {
-	font-size: 4.5em;
+	font-size: 4.0em;
 	font-weight: 300;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .clocks-spinbutton {
-	font-size: 48pt;
+	font-size: 42pt;
 }
 
 /* disguise insensitive spinbuttons as normal labels */
