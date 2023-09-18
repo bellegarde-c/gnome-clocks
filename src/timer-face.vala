@@ -26,11 +26,11 @@ public class Face : Adw.Bin, Clocks.Clock {
     [GtkChild]
     private unowned Gtk.ListBox timers_list;
     [GtkChild]
-    private unowned Gtk.Box no_timer_container;
-    [GtkChild]
     private unowned Gtk.Button start_button;
     [GtkChild]
     private unowned Gtk.Stack stack;
+    [GtkChild]
+    private unowned Adw.Bin timer_bin;
 
     public PanelId panel_id { get; construct set; }
     public ButtonMode button_mode { get; set; default = NONE; }
@@ -72,13 +72,12 @@ public class Face : Adw.Bin, Clocks.Clock {
             save ();
         });
 
-        bell = new Utils.Bell ("complete");
+        bell = new Utils.Bell (GLib.File.new_for_uri ("resource://org/gnome/clocks/sounds/complete.oga"));
         notification = new GLib.Notification (_("Time is up!"));
         notification.set_body (_("Timer countdown finished"));
         notification.set_priority (HIGH);
 
-        var no_timer_container_first_child = no_timer_container.get_first_child ();
-        no_timer_container.insert_child_after (timer_setup, no_timer_container_first_child);
+        timer_bin.child = timer_setup;
         stack.set_visible_child_name ("empty");
 
         start_button.set_sensitive (false);
@@ -110,15 +109,13 @@ public class Face : Adw.Bin, Clocks.Clock {
 
     public void activate_new () {
         var dialog = new SetupDialog ((Gtk.Window) get_root ());
-        dialog.response.connect ((dialog, response) => {
-            if (response == Gtk.ResponseType.ACCEPT) {
-                var timer = ((SetupDialog) dialog).timer_setup.get_timer ();
-                this.timers.add (timer);
-                timer.start ();
-            }
-            dialog.destroy ();
+        dialog.done.connect ((dialog) => {
+            var timer = ((SetupDialog) dialog).timer_setup.get_timer ();
+            this.timers.add (timer);
+            timer.start ();
+            dialog.close ();
         });
-        dialog.show ();
+        dialog.present ();
     }
 
     private void load () {

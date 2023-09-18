@@ -24,7 +24,6 @@ public class Window : Adw.ApplicationWindow {
         // primary menu
         { "show-primary-menu", on_show_primary_menu_activate },
         { "new", on_new_activate },
-        { "back", on_back_activate },
         { "help", on_help_activate },
         { "navigate-forward", on_navigate_forward },
         { "navigate-backward", on_navigate_backward },
@@ -34,11 +33,13 @@ public class Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned HeaderBar header_bar;
     [GtkChild]
-    private unowned Adw.Leaflet alarm_leaflet;
+    private unowned Adw.NavigationView navigation_view;
     [GtkChild]
-    private unowned Adw.Leaflet world_leaflet;
+    private unowned Adw.NavigationPage main_page;
     [GtkChild]
-    private unowned Gtk.Box main_view;
+    private unowned Adw.NavigationPage world_subpage;
+    [GtkChild]
+    private unowned Adw.NavigationPage alarm_subpage;
     [GtkChild]
     private unowned Adw.ViewStack stack;
     [GtkChild]
@@ -100,14 +101,17 @@ public class Window : Adw.ApplicationWindow {
             stack.visible_child = w;
             world_standalone.location = l;
             Utils.WallClock.get_default ().seconds_precision = true;
-            world_leaflet.navigate (Adw.NavigationDirection.FORWARD);
+            navigation_view.push (world_subpage);
+        });
+        world_subpage.hidden.connect (() => {
+            Utils.WallClock.get_default ().seconds_precision = false;
         });
 
         alarm.ring.connect ((w, a) => {
             close_standalone ();
             stack.visible_child = w;
             alarm_ringing_panel.alarm = a;
-            alarm_leaflet.visible_child = alarm_ringing_panel;
+            navigation_view.push (alarm_subpage);
         });
 
         stopwatch.notify["state"].connect ((w) => {
@@ -186,11 +190,6 @@ public class Window : Adw.ApplicationWindow {
         ((Clock) stack.visible_child).activate_new ();
     }
 
-    private void on_back_activate () {
-        Utils.WallClock.get_default ().seconds_precision = false;
-        world_leaflet.navigate (Adw.NavigationDirection.BACK);
-    }
-
     public void show_world () {
         close_standalone ();
         stack.visible_child = world;
@@ -243,10 +242,10 @@ public class Window : Adw.ApplicationWindow {
         var state = mod_state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK);
 
         if (keyval == Gdk.Key.Escape && state == 0) {
-            if (world_leaflet.visible_child == main_view) {
+            if (navigation_view.visible_page == main_page) {
                 handled = ((Clock) stack.visible_child).escape_pressed ();
             } else {
-                world_leaflet.navigate (Adw.NavigationDirection.BACK);
+                navigation_view.pop ();
             }
         }
 
@@ -254,7 +253,14 @@ public class Window : Adw.ApplicationWindow {
     }
 
     private void on_help_activate () {
-        Gtk.show_uri (this, "help:gnome-clocks", Gdk.CURRENT_TIME);
+        Gtk.UriLauncher help_launcher = new Gtk.UriLauncher ("help:gnome-clocks");
+        help_launcher.launch.begin (this, null, (obj, res) => {
+           try {
+               help_launcher.launch.end (res);
+           } catch (Error error) {
+               warning ("Could not open help: %s", error.message);
+           }
+         });
     }
 
     private void on_about_activate () {
@@ -333,25 +339,25 @@ public class Window : Adw.ApplicationWindow {
     }
 
     [GtkCallback]
-    private void visible_child_changed () {
-        if (alarm_leaflet.visible_child == alarm_ringing_panel) {
+    private void visible_page_changed () {
+        if (navigation_view.visible_page == alarm_subpage) {
             title = _("Alarm");
-        } else if (world_leaflet.visible_child == world_standalone) {
+        } else if (navigation_view.visible_page == world_subpage) {
             title = world_standalone.title;
         } else {
             title = _("Clocks");
         }
 
-        deletable = (alarm_leaflet.visible_child != alarm_ringing_panel);
+        deletable = (navigation_view.visible_page != alarm_subpage);
     }
 
     [GtkCallback]
     private void alarm_dismissed () {
-        alarm_leaflet.visible_child = world_leaflet;
+        navigation_view.pop ();
     }
 
     private void close_standalone () {
-        world_leaflet.visible_child = main_view;
+        navigation_view.pop ();
     }
 
     private void on_navigate_forward () {

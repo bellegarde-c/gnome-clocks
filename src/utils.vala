@@ -33,6 +33,12 @@ const double RISESET_CORRECTION_CIVIL = 6.0;
 const double RISESET_CORRECTION_NAUTICAL = 12.0;
 const double RISESET_CORRECTION_ASTRONOMICAL = 18.0;
 
+const string PORTAL_BUS_NAME = "org.freedesktop.portal.Desktop";
+const string PORTAL_OBJECT_PATH = "/org/freedesktop/portal/desktop";
+const string PORTAL_SETTINGS_INTERFACE = "org.freedesktop.portal.Settings";
+const string CLOCK_FORMAT_SCHEMA = "org.gnome.desktop.interface";
+const string CLOCK_FORMAT_PROPERTY_NAME = "clock-format";
+
 namespace Clocks {
 namespace Utils {
 
@@ -108,7 +114,7 @@ public class WallClock : Object {
         }
     }
 
-    private GLib.Settings settings;
+    private GLib.Object settings;
 
     private Gnome.WallClock wc;
 
@@ -125,20 +131,26 @@ public class WallClock : Object {
             timezone = wc.timezone;
         });
 
-        // system-wide settings about clock format
-        settings = new GLib.Settings ("org.gnome.desktop.interface");
-        settings.changed["clock-format"].connect (() => {
-            update_format ();
-        });
-        update_format ();
+        try {
+            setup_clock_format_portal ();
+        } catch (Error e) {
+            warning ("Failed to get clock format from portal, fallback to GSettings.");
+
+            // system-wide settings about clock format
+            settings = new GLib.Settings (CLOCK_FORMAT_SCHEMA);
+            ((GLib.Settings) settings).changed["clock-format"].connect (() => {
+                update_format (((GLib.Settings) settings).get_string (CLOCK_FORMAT_PROPERTY_NAME));
+            });
+
+            update_format (((GLib.Settings) settings).get_string (CLOCK_FORMAT_PROPERTY_NAME));
+        }
 
         update ();
     }
 
     public signal void tick ();
 
-    private void update_format () {
-        var sys_format = settings.get_string ("clock-format");
+    private void update_format (string sys_format) {
         format = sys_format == "12h" ? Format.TWELVE : Format.TWENTYFOUR;
     }
 
@@ -168,6 +180,44 @@ public class WallClock : Object {
         }
 
         return time;
+    }
+
+    private void setup_clock_format_portal () throws Error {
+        settings = new GLib.DBusProxy.for_bus_sync (BusType.SESSION,
+                                                    DBusProxyFlags.NONE,
+                                                    null,
+                                                    PORTAL_BUS_NAME,
+                                                    PORTAL_OBJECT_PATH,
+                                                    PORTAL_SETTINGS_INTERFACE);
+
+        var result = ((GLib.DBusProxy) settings).call_sync ("Read",
+                                                            new Variant ("(ss)", CLOCK_FORMAT_SCHEMA, CLOCK_FORMAT_PROPERTY_NAME),
+                                                            DBusCallFlags.NONE,
+                                                            int.MAX);
+
+        ((GLib.DBusProxy) settings).g_signal.connect ( (sender_name, signal_name, parameters) => {
+            unowned string namespace = null;
+            unowned string name = null;
+            GLib.Variant value = null;
+
+            if (signal_name != "SettingChanged") {
+                return;
+            }
+
+            parameters.get ("(&s&sv)", &namespace, &name, &value);
+
+            if (namespace == CLOCK_FORMAT_SCHEMA &&
+                name == CLOCK_FORMAT_PROPERTY_NAME) {
+                update_format (value.get_string ());
+            }
+        });
+
+        GLib.Variant child = null;
+        GLib.Variant child2 = null;
+
+        result.get ("(v)", &child);
+        child.get ("v", &child2);
+        update_format (child2.get_string ());
     }
 }
 
@@ -392,57 +442,47 @@ public class Weekdays {
 }
 
 public class Bell : Object {
-    private GSound.Context? gsound;
-    private GLib.Cancellable cancellable;
-    private string soundtheme;
-    private string sound;
+    private Gtk.MediaFile media_file;
+    private GLib.File file;
 
-    public Bell (string soundid) {
-        try {
-            gsound = new GSound.Context ();
-        } catch (GLib.Error e) {
-            warning ("Sound could not be initialized, error: %s", e.message);
-        }
-
-        var settings = new GLib.Settings ("org.gnome.desktop.sound");
-        soundtheme = settings.get_string ("theme-name");
-        sound = soundid;
-        cancellable = new GLib.Cancellable ();
-    }
-
-    private async void ring_real (bool repeat) {
-        if (gsound == null) {
+    public Bell (GLib.File sound) {
+        if (sound == null) {
+            warning ("Sound is missing");
             return;
         }
 
-        if (cancellable.is_cancelled ()) {
-            cancellable.reset ();
-        }
+        file = sound;
+    }
 
-        try {
-            do {
-                yield ((GSound.Context) gsound).play_full (cancellable,
-                                                           GSound.Attribute.EVENT_ID, sound,
-                                                           GSound.Attribute.CANBERRA_XDG_THEME_NAME, soundtheme,
-                                                           GSound.Attribute.MEDIA_ROLE, "alarm");
-            } while (repeat);
-        } catch (GLib.IOError.CANCELLED e) {
-            // ignore
-        } catch (GLib.Error e) {
-            warning ("Error playing sound: %s", e.message);
-        }
+    private void ring_real (bool repeat) {
+        media_file = Gtk.MediaFile.for_file (file);
+
+        media_file.set_loop (repeat);
+        media_file.notify["prepared"].connect (() => {
+            if (!media_file.has_audio) {
+                warning ("Invalid sound");
+            }
+        });
+
+        media_file.play_now ();
     }
 
     public void ring_once () {
-        ring_real.begin (false);
+        ring_real (false);
     }
 
     public void ring () {
-        ring_real.begin (true);
+        ring_real (true);
     }
 
     public void stop () {
-        cancellable.cancel ();
+        if (media_file == null) {
+            return;
+        }
+
+        media_file.set_playing (false);
+        media_file.close ();
+        media_file = null;
     }
 }
 
