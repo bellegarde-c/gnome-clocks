@@ -1,3 +1,9 @@
+gnome-clocks (46.0-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Amin Bandali <bandali@ubuntu.com>  Tue, 19 Mar 2024 10:42:55 -0400
+
 gnome-clocks (45.0-1) unstable; urgency=medium
 
   * New upstream release
