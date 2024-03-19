@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>@appid@.desktop</id>
+  <id>@appid@</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <name>Clocks</name>
@@ -52,6 +52,21 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="46.0" date="2024-03-15">
+      <description>
+        <p>A new release candidate of Clocks</p>
+        <ul>
+          <li>Add mnemonic to Start button</li>
+          <li>Disable alarm after ringing when not set to repeat</li>
+          <li>Fix countdown timer progress during suspend</li>
+          <li>Fix resume bug on clear button pressed</li>
+          <li>Fix sorting of locations</li>
+          <li>Improve app metainfo for AppStream 1.0</li>
+          <li>Show a toast when a new alarm is set</li>
+          <li>Translations updates</li>
+        </ul>
+      </description>
+    </release>
     <release version="45.0" date="2023-09-17">
       <description>
         <p>A new release of Clocks</p>
@@ -59,9 +74,9 @@
           <li>Port to new libadwaita widgets, including breakpoints</li>
           <li>Bundle bell sounds</li>
           <li>GNOME Shell search provider performance improvements</li>
-	  <li>Improve location matching by normalizing location search strings</li>
-	  <li>Replace deprecated code paths</li>
-	  <li>Use xdg-desktop-portal to get system clock format</li>
+          <li>Improve location matching by normalizing location search strings</li>
+          <li>Replace deprecated code paths</li>
+          <li>Use xdg-desktop-portal to get system clock format</li>
           <li>Translation updates</li>
         </ul>
       </description>
@@ -142,17 +157,23 @@
     <release version="3.31.1" date="2018-11-11" type="development" />
     <release version="3.30.1" date="2018-10-21" type="stable" />
   </releases>
-  <url type="homepage">https://apps.gnome.org/app/org.gnome.clocks/</url>
+  <url type="homepage">https://apps.gnome.org/Clocks/</url>
+  <url type="contribute">https://welcome.gnome.org/app/Clocks/</url>
   <url type="bugtracker">https://gitlab.gnome.org/GNOME/gnome-clocks/issues</url>
   <url type="donation">https://www.gnome.org/donate/</url>
   <url type="help">https://help.gnome.org/users/gnome-clocks/stable/</url>
+  <url type="translate">https://l10n.gnome.org/module/gnome-clocks/</url>
+  <url type="vcs-browser">https://gitlab.gnome.org/GNOME/gnome-clocks</url>
   <launchable type="desktop-id">@appid@.desktop</launchable>
+  <!-- developer_name tag deprecated with Appstream 1.0 -->
   <developer_name>The GNOME Project</developer_name>
+  <developer id="org.gnome">
+    <name>The GNOME Project</name>
+  </developer>
   <project_group>GNOME</project_group>
   <translation type="gettext">gnome-clocks</translation>
   <content_rating type="oars-1.0" />
   <custom>
-    <value key="Purism::form_factor">workstation</value>
     <value key="Purism::form_factor">mobile</value>
     <value key="GnomeSoftware::key-colors">[(63, 57, 71)]</value>
   </custom>

@@ -11,7 +11,8 @@
 	font-weight: 300;
 }
 
-.clocks-ampm-toggle-button {
+.clocks-ampm-toggle-button,
+.clocks-secondary-standalone-label {
 	font-size: 18pt;
 }
 
@@ -31,10 +32,6 @@
 	font-weight: bold;
 }
 
-.clocks-secondary-standalone-label {
-	font-size: 18pt;
-}
-
 .clocks-alarm-setup-time {
 	font-size: 32pt;
 }
@@ -49,12 +46,11 @@
 	font-size: 42pt;
 }
 
-/* disguise insensitive spinbuttons as normal labels */
-
-.timer-panel .timer-header {
-	font-size: 20pt;
-	font-weight: 300;
+.clocks-spinbutton > text {
+	padding: 0px 7px;
 }
+
+/* disguise insensitive spinbuttons as normal labels */
 
 .timer-countdown {
 	font-size: 40pt;
@@ -73,7 +69,9 @@
 	font-weight: lighter;
 }
 
-.stopped-stopwatch .seconds-label {
+.stopped-stopwatch .seconds-label,
+.running-stopwatch .seconds-label,
+.paused-stopwatch .seconds-label {
 	font-weight: 300;
 }
 
@@ -86,11 +84,6 @@
 .running-stopwatch .miliseconds-label,
 .paused-stopwatch .miliseconds-label {
 	font-size: 50px;
-}
-
-.running-stopwatch .seconds-label,
-.paused-stopwatch .seconds-label {
-	font-weight: 300;
 }
 
 /* World */

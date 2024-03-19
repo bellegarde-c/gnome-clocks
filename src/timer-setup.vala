@@ -23,6 +23,7 @@ namespace Timer {
 [GtkTemplate (ui = "/org/gnome/clocks/ui/timer-setup.ui")]
 public class Setup : Gtk.Box {
     public signal void duration_changed (int seconds);
+    public signal void start_timer ();
     [GtkChild]
     private unowned Gtk.SpinButton h_spinbutton;
     [GtkChild]
@@ -37,16 +38,17 @@ public class Setup : Gtk.Box {
         var actions = new SimpleActionGroup ();
         // The duration here represents a number of minutes
         var duration_type = new GLib.VariantType ("i");
-        var set_duration_action = new SimpleAction ("set-duration", duration_type);
-        set_duration_action.activate.connect ((action, param) => {
+        var start_timer_action = new SimpleAction ("start-timer", duration_type);
+        start_timer_action.activate.connect ((action, param) => {
             var total_minutes = (int32) param;
             var hours = total_minutes / 60;
             var minutes = total_minutes - hours * 60;
             this.h_spinbutton.value = hours;
             this.m_spinbutton.value = minutes;
             this.s_spinbutton.value = 0;
+            this.start_timer ();
         });
-        actions.add_action (set_duration_action);
+        actions.add_action (start_timer_action);
         insert_action_group ("timer-setup", actions);
 
         time_grid.set_direction (Gtk.TextDirection.LTR);
@@ -56,10 +58,10 @@ public class Setup : Gtk.Box {
         /**
          * Gets the total duration of a timer in seconds
          * */
-
-        var hours = (int)h_spinbutton.value;
-        var minutes = (int)m_spinbutton.value;
-        var seconds = (int)s_spinbutton.value;
+        // Treat negative numbers while typing as `0`
+        var hours = int.max (0, int.parse (h_spinbutton.text));
+        var minutes = int.max (0, int.parse (m_spinbutton.text));
+        var seconds = int.max (0, int.parse (s_spinbutton.text));
 
         return hours * 3600 + minutes * 60 + seconds;
     }
@@ -68,9 +70,22 @@ public class Setup : Gtk.Box {
         return (new Item.from_seconds (get_duration (), ""));
     }
 
+    // This callback is called on `changed` (from `Gtk.Editable`) rather than on
+    // `value-changed` (from `Gtk.SpinButton`) because we want to allow clicks
+    // on the start/add timer buttons as soon as a duration is typed (as opposed
+    // to allowing them after the spin button loses focus, which is when a
+    // `value-changed` signal is emitted).
     [GtkCallback]
-    private void update_duration () {
-        duration_changed (get_duration ());
+    private void update_duration (Gtk.Editable editable) {
+        // `Gtk.Editable` implements `set_value` by deleting the old text,
+        // followed by inserting the new text, causing two `changed` signals to
+        // be emitted. When the field is not focused, we need to ignore the
+        // first signal (where `text` is empty) since momentarily updating the
+        // field with a value of `0` prevents clicks on the start/add timer
+        // buttons.
+        if (editable.get_delegate ().has_focus || editable.text != "") {
+            duration_changed (get_duration ());
+        }
     }
 
     [GtkCallback]
