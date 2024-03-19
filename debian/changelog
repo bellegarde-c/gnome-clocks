@@ -2,6 +2,7 @@ gnome-clocks (46.0-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * Stop using debian/control.in
+  * debian/control: Bump minimum required libglib2.0-dev to 2.72
 
  -- Amin Bandali <bandali@ubuntu.com>  Tue, 19 Mar 2024 10:42:55 -0400
 
