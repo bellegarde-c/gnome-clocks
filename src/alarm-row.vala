@@ -66,9 +66,9 @@ private class Row : Gtk.ListBoxRow {
         Object (alarm: alarm);
 
         alarm.notify["name"].connect (update);
-        alarm.notify["active"].connect (update);
         alarm.notify["state"].connect (update);
         alarm.notify["time"].connect (update);
+        alarm.notify["ring_time"].connect (update);
 
         update ();
     }
@@ -80,11 +80,7 @@ private class Row : Gtk.ListBoxRow {
             remove_css_class ("active");
         }
 
-        if (alarm.state == Item.State.SNOOZING) {
-            time.label = alarm.snooze_time_label;
-        } else {
-            time.label = alarm.time_label;
-        }
+        time.label = alarm.time_label;
 
         var label = alarm.name;
 
@@ -98,11 +94,24 @@ private class Row : Gtk.ListBoxRow {
         if (alarm.state == Item.State.SNOOZING) {
             if (label != null && ((string) label).length > 0) {
                 // Translators: The alarm for the time %s titled %s has been "snoozed"
-                label = _("Snoozed from %s: %s").printf (alarm.time_label, (string) label);
+                label = _("%s: Snoozed until %s").printf ((string) label, alarm.ring_time_label);
             } else {
                 // Translators: %s is a time
-                label = _("Snoozed from %s").printf (alarm.time_label);
+                label = _("Snoozed until %s").printf (alarm.ring_time_label);
             }
+        }
+
+        if (alarm.state == Item.State.MISSED) {
+            if (label != null && ((string) label).length > 0) {
+                // Translators: The alarm titled %s was "missed"
+                label = _("Alarm %s was missed").printf ((string) label);
+            } else {
+                label = _("Alarm was missed");
+            }
+
+            title.add_css_class ("error");
+        } else {
+            title.remove_css_class ("error");
         }
 
         title.label = (string) label;

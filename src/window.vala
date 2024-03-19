@@ -21,8 +21,6 @@ namespace Clocks {
 [GtkTemplate (ui = "/org/gnome/clocks/ui/window.ui")]
 public class Window : Adw.ApplicationWindow {
     private const GLib.ActionEntry[] ACTION_ENTRIES = {
-        // primary menu
-        { "show-primary-menu", on_show_primary_menu_activate },
         { "new", on_new_activate },
         { "help", on_help_activate },
         { "navigate-forward", on_navigate_forward },
@@ -32,6 +30,8 @@ public class Window : Adw.ApplicationWindow {
 
     [GtkChild]
     private unowned HeaderBar header_bar;
+    [GtkChild]
+    private unowned Adw.ToastOverlay toast_overlay;
     [GtkChild]
     private unowned Adw.NavigationView navigation_view;
     [GtkChild]
@@ -114,6 +114,9 @@ public class Window : Adw.ApplicationWindow {
             navigation_view.push (alarm_subpage);
         });
 
+        // Immediately check if we need to notify the user about alarms
+        Utils.WallClock.get_default ().tick ();
+
         stopwatch.notify["state"].connect ((w) => {
             var stopwatch_stack_page = stack.get_page (stopwatch);
             stopwatch_stack_page.needs_attention = (stopwatch.state == Stopwatch.Face.State.RUNNING);
@@ -133,57 +136,6 @@ public class Window : Adw.ApplicationWindow {
         if (Config.PROFILE == "Devel") {
             add_css_class ("devel");
         }
-    }
-
-    [Signal (action = true)]
-    public virtual signal void change_page (int offset) {
-        var dir = false;
-
-        if (get_direction () == RTL) {
-            dir = offset == 0 ? false : true;
-        } else {
-            dir = offset == 1 ? false : true;
-        }
-
-        switch (stack.visible_child_name) {
-            case "world":
-                if (dir) {
-                    stack.error_bell ();
-                } else {
-                    stack.visible_child = alarm;
-                }
-                break;
-            case "alarm":
-                if (dir) {
-                    stack.visible_child = world;
-                } else {
-                    stack.visible_child = stopwatch;
-                }
-                break;
-            case "stopwatch":
-                if (dir) {
-                    stack.visible_child = alarm;
-                } else {
-                    stack.visible_child = timer;
-                }
-                break;
-            case "timer":
-                if (dir) {
-                    stack.visible_child = stopwatch;
-                } else {
-                    stack.error_bell ();
-                }
-                break;
-        }
-    }
-
-    [Signal (action = true)]
-    public virtual signal void set_page (string page) {
-        stack.visible_child_name = page;
-    }
-
-    private void on_show_primary_menu_activate () {
-        header_bar.show_primary_menu ();
     }
 
     private void on_new_activate () {
@@ -401,6 +353,10 @@ public class Window : Adw.ApplicationWindow {
             var page = param.get_string ();
             stack.visible_child_name = page;
         }
+    }
+
+    public void add_toast (Adw.Toast toast) {
+        toast_overlay.add_toast (toast);
     }
 }
 

@@ -23,18 +23,32 @@ namespace Alarm {
 private struct AlarmTime {
     public int hour;
     public int minute;
+
+    public bool is_eq (AlarmTime other) {
+        return this.hour == other.hour && this.minute == other.minute;
+    }
+
+    public int compare (AlarmTime other) {
+        int this_minutes = hour * 60 + minute;
+        int other_minutes = other.hour * 60 + other.minute;
+
+        if (this_minutes < other_minutes)
+            return -1;
+
+        if (this_minutes > other_minutes)
+            return 1;
+
+        return 0;
+    }
 }
 
 private class Item : Object, ContentItem {
-    // FIXME: should we add a "MISSED" state where the alarm stopped
-    // ringing but we keep showing the ringing panel?
     public enum State {
         READY,
         RINGING,
-        SNOOZING
+        SNOOZING,
+        MISSED
     }
-
-    public bool editing { get; set; default = false; }
 
     public string id { get; construct set; }
 
@@ -54,6 +68,27 @@ private class Item : Object, ContentItem {
     }
 
     public AlarmTime time { get; set; }
+    private GLib.DateTime? _ring_time;
+
+    [CCode (notify = false)]
+    public GLib.DateTime? ring_time {
+        get {
+            return _ring_time;
+        }
+        private set {
+            if (value == _ring_time) {
+                return;
+            }
+
+            var prev_active = active;
+            _ring_time = value;
+
+            if (prev_active != active) {
+                notify_property ("active");
+            }
+            notify_property ("ring-time");
+        }
+    }
 
     private Utils.Weekdays? _days;
     public Utils.Weekdays? days {
@@ -67,17 +102,53 @@ private class Item : Object, ContentItem {
         }
     }
 
-    public State state { get; private set; }
+    private State _state = State.READY;
+
+    [CCode (notify = false)]
+    public State state {
+        get {
+            return _state;
+        }
+        private set {
+            if (value == _state) {
+                return;
+            }
+
+            var prev_state = _state;
+            _state = value;
+
+            if (prev_state == State.RINGING) {
+                bell.stop ();
+            }
+
+            if (_state == State.RINGING) {
+                ring ();
+            }
+
+            notify_property ("state");
+        }
+    }
 
     public string time_label {
          owned get {
-            return Utils.WallClock.get_default ().format_time (alarm_time, false);
+            // FIXME: Format the time without creating GLib.DateTime
+            var wallclock = Utils.WallClock.get_default ();
+            var now = wallclock.date_time;
+            var dt = new GLib.DateTime (wallclock.timezone,
+                                        now.get_year (),
+                                        now.get_month (),
+                                        now.get_day_of_month (),
+                                        time.hour,
+                                        time.minute,
+                                        0);
+
+            return wallclock.format_time (dt, false);
          }
     }
 
-    public string snooze_time_label {
+    public string ring_time_label {
          owned get {
-            return Utils.WallClock.get_default ().format_time (snooze_time, false);
+            return Utils.WallClock.get_default ().format_time (ring_time, false);
          }
     }
 
@@ -90,28 +161,24 @@ private class Item : Object, ContentItem {
     [CCode (notify = false)]
     public bool active {
         get {
-            return _active && !this.editing;
+            return ring_time != null;
         }
-
         set {
-            if (value != _active) {
-                _active = value;
-
-                reset ();
-                if (!active && state == State.RINGING) {
-                    stop ();
-                }
-
-                notify_property ("active");
+            if (value == active) {
+                return;
             }
+
+            if (value) {
+                ring_time = next_ring_time ();
+            } else {
+                ring_time = null;
+            }
+
+            state = State.READY;
         }
     }
 
     private string _name;
-    private bool _active = true;
-    private GLib.DateTime alarm_time;
-    private GLib.DateTime snooze_time;
-    private GLib.DateTime ring_end_time;
     private Utils.Bell bell;
     private GLib.Notification notification;
 
@@ -130,12 +197,11 @@ private class Item : Object, ContentItem {
     }
 
     public void reset () {
-        update_alarm_time ();
-        update_snooze_time (alarm_time);
+        ring_time = next_ring_time ();
         state = State.READY;
     }
 
-    private void update_alarm_time () {
+    private GLib.DateTime next_ring_time () {
         var wallclock = Utils.WallClock.get_default ();
         var now = wallclock.date_time;
         var dt = new GLib.DateTime (wallclock.timezone,
@@ -160,44 +226,40 @@ private class Item : Object, ContentItem {
             }
         }
 
-        alarm_time = dt;
+        return dt;
     }
 
-    private void update_snooze_time (GLib.DateTime start_time) {
-        snooze_time = start_time.add_minutes (snooze_minutes);
-    }
-
-    public virtual signal void ring () {
+    private void ring () {
         var app = (Clocks.Application) GLib.Application.get_default ();
         app.send_notification ("alarm-clock-elapsed", notification);
         bell.ring ();
     }
 
-    private void start_ringing (GLib.DateTime now) {
-        update_snooze_time (now);
-        ring_end_time = now.add_minutes (ring_minutes);
-        state = State.RINGING;
-        ring ();
-    }
-
     public void snooze () {
-        bell.stop ();
+        ring_time = ring_time.add_minutes (snooze_minutes);
         state = State.SNOOZING;
     }
 
-    public void stop () {
-        bell.stop ();
-        update_snooze_time (alarm_time);
-        state = State.READY;
+    public void stop (bool missed = false) {
+        // Disable the alarm if it doesn't have repeat days
+        if (days == null || ((Utils.Weekdays) days).empty) {
+            ring_time = null;
+        } else {
+            ring_time = next_ring_time ();
+        }
+
+        if (missed) {
+            state = State.MISSED;
+        } else {
+            state = State.READY;
+        }
     }
 
     private bool compare_with_item (Item i) {
-        return (this.alarm_time.compare (i.alarm_time) == 0 && (this.active || this.editing) && i.active);
+        return (this.time.is_eq (i.time) && this.active && i.active);
     }
 
     public bool check_duplicate_alarm (List<Item> alarms) {
-        update_alarm_time ();
-
         foreach (var item in alarms) {
             if (this.compare_with_item (item)) {
                 return true;
@@ -219,17 +281,12 @@ private class Item : Object, ContentItem {
         var wallclock = Utils.WallClock.get_default ();
         var now = wallclock.date_time;
 
-        if (state == State.RINGING && now.compare (ring_end_time) > 0) {
-            stop ();
-        }
+        var ring_end_time = ring_time.add_minutes (ring_minutes);
 
-        if (state == State.SNOOZING && now.compare (snooze_time) > 0) {
-            start_ringing (now);
-        }
-
-        if (state == State.READY && now.compare (alarm_time) > 0) {
-            start_ringing (now);
-            update_alarm_time (); // reschedule for the next repeat
+        if (now.compare (ring_end_time) > 0) {
+            stop (true);
+        } else if ((state != State.RINGING) && now.compare (ring_time) > 0) {
+            state = State.RINGING;
         }
 
         return state != last_state;
@@ -239,9 +296,10 @@ private class Item : Object, ContentItem {
         builder.open (new GLib.VariantType ("a{sv}"));
         builder.add ("{sv}", "name", new GLib.Variant.string ((string) name));
         builder.add ("{sv}", "id", new GLib.Variant.string (id));
-        builder.add ("{sv}", "active", new GLib.Variant.boolean (active));
         builder.add ("{sv}", "hour", new GLib.Variant.int32 (time.hour));
         builder.add ("{sv}", "minute", new GLib.Variant.int32 (time.minute));
+        if (ring_time != null)
+            builder.add ("{sv}", "ring_time", new GLib.Variant.string (((!) ring_time).format_iso8601 ()));
         builder.add ("{sv}", "days", ((Utils.Weekdays) days).serialize ());
         builder.add ("{sv}", "snooze_minutes", new GLib.Variant.int32 (snooze_minutes));
         builder.add ("{sv}", "ring_minutes", new GLib.Variant.int32 (ring_minutes));
@@ -253,9 +311,10 @@ private class Item : Object, ContentItem {
         Variant val;
         string? name = null;
         string? id = null;
-        bool active = true;
+        bool active = false;
         int hour = -1;
         int minute = -1;
+        GLib.DateTime? ring_time = null;
         int snooze_minutes = 10;
         int ring_minutes = 5;
         Utils.Weekdays? days = null;
@@ -272,6 +331,8 @@ private class Item : Object, ContentItem {
                 hour = (int32) val;
             } else if (key == "minute") {
                 minute = (int32) val;
+            } else if (key == "ring_time") {
+                ring_time = new GLib.DateTime.from_iso8601 ((string) val, null);
             } else if (key == "days") {
                 days = Utils.Weekdays.deserialize (val);
             } else if (key == "snooze_minutes") {
@@ -284,18 +345,26 @@ private class Item : Object, ContentItem {
         if (hour >= 0 && minute >= 0) {
             Item alarm = new Item (id);
             alarm.name = name;
-            alarm.active = active;
             alarm.time = { hour, minute };
+            // Keep compatibility with older versions
+            if (active && ring_time == null) {
+                alarm.active = true;
+            } else {
+                alarm.ring_time = ring_time;
+            }
             alarm.days = days;
             alarm.ring_minutes = ring_minutes;
             alarm.snooze_minutes = snooze_minutes;
-            alarm.reset ();
             return alarm;
         } else {
             warning ("Invalid alarm %s", name != null ? (string) name : "[unnamed]");
         }
 
         return null;
+    }
+
+    public static int compare (Item a, Item b) {
+        return a.time.compare (b.time);
     }
 }
 
