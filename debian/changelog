@@ -1,6 +1,7 @@
 gnome-clocks (46.0-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * Stop using debian/control.in
 
  -- Amin Bandali <bandali@ubuntu.com>  Tue, 19 Mar 2024 10:42:55 -0400
 
